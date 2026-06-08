@@ -138,3 +138,45 @@ p {
   align-items: center;
   gap: 8px;
 }
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .wrapper {
+    flex-direction: column;
+  }
+  .sidebar {
+    width: 100%;
+    min-height: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--card-border);
+    padding: 15px;
+  }
+  .sidebar .nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-bottom: 15px;
+  }
+  .sidebar .nav-item {
+    margin-bottom: 0;
+  }
+  .sidebar .nav-link {
+    padding: 8px 12px;
+    font-size: 0.9rem;
+  }
+  .sidebar .mt-auto {
+    padding-top: 0 !important;
+    display: flex;
+    justify-content: space-between;
+  }
+  .sidebar .mt-auto button {
+    width: auto !important;
+    margin-bottom: 0 !important;
+  }
+  .content {
+    padding: 15px;
+  }
+  .hero i.floating-icon {
+    display: none;
+  }
+}
