@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - RoomSplit</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .wrapper { display: flex; width: 100%; }
+        .sidebar { width: 250px; min-height: 100vh; background: var(--card-bg); border-right: 1px solid var(--card-border); padding: 20px; }
+        .content { flex-grow: 1; padding: 20px; }
+        .nav-link { color: var(--text-secondary); padding: 10px 15px; border-radius: 8px; margin-bottom: 5px; transition: all 0.2s; }
+        .nav-link:hover, .nav-link.active { background: rgba(79, 70, 229, 0.1); color: var(--primary-color); }
+        .stat-card { border-left: 4px solid var(--primary-color); }
+        .stat-card.success { border-left-color: var(--success-color); }
+        .stat-card.danger { border-left-color: var(--danger-color); }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <nav class="sidebar glass-card border-0 rounded-0">
+            <a href="#" class="logo mb-5 d-block">
+                <i class="fa-solid fa-wallet"></i> RoomSplit
+            </a>
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link active" href="dashboard.html"><i class="fa-solid fa-chart-line me-2"></i> Dashboard</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="expenses.html"><i class="fa-solid fa-receipt me-2"></i> Expenses</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="settlements.html"><i class="fa-solid fa-handshake me-2"></i> Settlements</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="room.html"><i class="fa-solid fa-users me-2"></i> Room Settings</a>
+                </li>
+            </ul>
+            <div class="mt-auto pt-5">
+                <button id="theme-toggle" class="btn btn-link text-decoration-none w-100 text-start mb-2" style="color: var(--text-secondary);">
+                    <i class="fa-solid fa-moon me-2"></i> Toggle Theme
+                </button>
+                <button onclick="logout()" class="btn btn-link text-decoration-none w-100 text-start" style="color: var(--danger-color);">
+                    <i class="fa-solid fa-sign-out-alt me-2"></i> Logout
+                </button>
+            </div>
+        </nav>
+
+        <main class="content">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 id="roomName">Loading...</h2>
+                <div class="user-profile">
+                    <span id="userName" class="fw-bold">...</span>
+                </div>
+            </div>
+
+            <div id="noRoomAlert" class="alert alert-warning d-none glass-card border-0">
+                You are not in any room. <a href="room.html" class="alert-link">Create or join one</a>.
+            </div>
+
+            <div id="dashboardContent" class="d-none animate-fade-in">
+                <div class="row g-4 mb-4">
+                    <div class="col-md-3">
+                        <div class="glass-card stat-card p-4">
+                            <h6 class="text-secondary">My Due Amount</h6>
+                            <h3 class="mt-2 text-danger">₹<span id="stat-due">0</span></h3>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="glass-card stat-card success p-4">
+                            <h6 class="text-secondary">My Paid Amount</h6>
+                            <h3 class="mt-2 text-success">₹<span id="stat-paid">0</span></h3>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="glass-card stat-card p-4">
+                            <h6 class="text-secondary">My Balance</h6>
+                            <h3 class="mt-2 text-primary">₹<span id="stat-balance">0</span></h3>
+                            <small class="text-secondary">Positive = Credit</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="glass-card stat-card p-4">
+                            <h6 class="text-secondary">Total Room Expenses</h6>
+                            <h3 class="mt-2 text-primary">₹<span id="stat-total">0</span></h3>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-4">
+                    <div class="col-md-8">
+                        <div class="glass-card p-4 h-100">
+                            <h5 class="mb-4">Monthly Spending Trend</h5>
+                            <canvas id="trendChart" height="100"></canvas>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="glass-card p-4 h-100">
+                            <h5 class="mb-4">Category Distribution</h5>
+                            <canvas id="categoryChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../js/app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            if(!getToken()) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            try {
+                const user = await apiFetch('/auth/me');
+                document.getElementById('userName').textContent = user.name;
+                
+                const rooms = await apiFetch('/rooms/me');
+                if(rooms.length === 0) {
+                    document.getElementById('noRoomAlert').classList.remove('d-none');
+                    document.getElementById('roomName').textContent = 'No Room Selected';
+                } else {
+                    const activeRoom = rooms[0].room_id;
+                    localStorage.setItem('activeRoomId', activeRoom);
+                    
+                    const roomInfo = await apiFetch(`/rooms/${activeRoom}`);
+                    document.getElementById('roomName').textContent = roomInfo.name;
+                    
+                    document.getElementById('dashboardContent').classList.remove('d-none');
+                    loadDashboardStats(activeRoom);
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        });
+
+        async function loadDashboardStats(roomId) {
+            try {
+                const stats = await apiFetch(`/analytics/${roomId}/dashboard`);
+                
+                animateValue('stat-due', 0, stats.my_due, 1000);
+                animateValue('stat-paid', 0, stats.my_paid, 1000);
+                animateValue('stat-balance', 0, stats.my_balance, 1000);
+                animateValue('stat-total', 0, stats.total_expenses, 1000);
+                
+                const charts = await apiFetch(`/analytics/${roomId}/charts`);
+                
+                const ctxTrend = document.getElementById('trendChart').getContext('2d');
+                new Chart(ctxTrend, {
+                    type: 'line',
+                    data: {
+                        labels: charts.trends.labels.length ? charts.trends.labels : ['No Data'],
+                        datasets: [{
+                            label: 'Expenses',
+                            data: charts.trends.data.length ? charts.trends.data : [0],
+                            borderColor: '#4F46E5',
+                            backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        }]
+                    },
+                    options: { responsive: true, plugins: { legend: { display: false } } }
+                });
+
+                const ctxCategory = document.getElementById('categoryChart').getContext('2d');
+                new Chart(ctxCategory, {
+                    type: 'doughnut',
+                    data: {
+                        labels: charts.categories.labels.length ? charts.categories.labels : ['No Data'],
+                        datasets: [{
+                            data: charts.categories.data.length ? charts.categories.data : [1],
+                            backgroundColor: ['#4F46E5', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6']
+                        }]
+                    },
+                    options: { responsive: true }
+                });
+
+            } catch (err) {
+                console.error("Error loading dashboard:", err);
+            }
+        }
+
+        function animateValue(id, start, end, duration) {
+            if (start === end) return;
+            const obj = document.getElementById(id);
+            let startTimestamp = null;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                obj.innerHTML = Math.floor(progress * (end - start) + start);
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                } else {
+                    obj.innerHTML = end; 
+                }
+            };
+            window.requestAnimationFrame(step);
+        }
+    </script>
+</body>
+</html>

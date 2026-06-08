@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RoomSplit - Smart Room Expense Manager</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .hero {
+            min-height: calc(100vh - 80px);
+            display: flex;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .floating-icon {
+            position: absolute;
+            opacity: 0.2;
+            animation: float 6s ease-in-out infinite;
+        }
+        @keyframes float {
+            0% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(10deg); }
+            100% { transform: translateY(0px) rotate(0deg); }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <a href="index.html" class="logo">
+            <i class="fa-solid fa-wallet"></i> RoomSplit
+        </a>
+        <div class="nav-links d-flex align-items-center gap-3">
+            <button id="theme-toggle" class="btn btn-link text-decoration-none" style="color: var(--text-primary);">
+                <i class="fa-solid fa-moon"></i>
+            </button>
+            <a href="pages/login.html" class="text-decoration-none" style="color: var(--text-primary); font-weight: 500;">Login</a>
+            <a href="pages/register.html" class="btn-primary">Get Started</a>
+        </div>
+    </nav>
+
+    <div class="hero container">
+        <i class="fa-solid fa-money-bill-wave floating-icon" style="top: 20%; left: 10%; font-size: 3rem; color: var(--secondary-color);"></i>
+        <i class="fa-solid fa-chart-pie floating-icon" style="bottom: 30%; left: 20%; font-size: 4rem; color: var(--primary-color);"></i>
+        <i class="fa-solid fa-coins floating-icon" style="top: 30%; right: 15%; font-size: 2.5rem; color: #F59E0B; animation-delay: 1s;"></i>
+        <i class="fa-solid fa-receipt floating-icon" style="bottom: 20%; right: 25%; font-size: 3.5rem; color: var(--primary-hover); animation-delay: 2s;"></i>
+
+        <div class="row align-items-center w-100">
+            <div class="col-lg-6 animate-fade-in">
+                <h1 class="display-4 fw-bold mb-4">Smart Room Expense & Settlement Manager</h1>
+                <p class="lead mb-5">Manage room expenses, rent, groceries, and settlements transparently. Say goodbye to awkward money conversations with your roommates.</p>
+                <div class="d-flex gap-3">
+                    <a href="pages/register.html" class="btn-primary" style="padding: 14px 28px; font-size: 1.1rem;">
+                        Create Your Room <i class="fa-solid fa-arrow-right ms-2"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="col-lg-6 mt-5 mt-lg-0 animate-fade-in" style="animation-delay: 0.2s;">
+                <div class="glass-card text-center p-5">
+                    <img src="https://illustrations.popsy.co/amber/freelancer.svg" alt="Expense Management" class="img-fluid" style="max-height: 350px;">
+                    <h3 class="mt-4">Transparent Settlements</h3>
+                    <p>Automatically calculate who owes whom with our smart settlement engine.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const token = getToken();
+            if (token) {
+                const navLinks = document.querySelector('.nav-links');
+                navLinks.innerHTML = `
+                    <button id="theme-toggle" class="btn btn-link text-decoration-none" style="color: var(--text-primary);">
+                        <i class="fa-solid fa-moon"></i>
+                    </button>
+                    <a href="pages/dashboard.html" class="btn-primary">Go to Dashboard</a>
+                `;
+                document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
+            }
+        });
+    </script>
+</body>
+</html>

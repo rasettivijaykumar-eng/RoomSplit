@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Room Settings - RoomSplit</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        .wrapper { display: flex; width: 100%; }
+        .sidebar { width: 250px; min-height: 100vh; background: var(--card-bg); border-right: 1px solid var(--card-border); padding: 20px; }
+        .content { flex-grow: 1; padding: 20px; }
+        .nav-link { color: var(--text-secondary); padding: 10px 15px; border-radius: 8px; margin-bottom: 5px; transition: all 0.2s; }
+        .nav-link:hover, .nav-link.active { background: rgba(79, 70, 229, 0.1); color: var(--primary-color); }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <nav class="sidebar glass-card border-0 rounded-0">
+            <a href="#" class="logo mb-5 d-block">
+                <i class="fa-solid fa-wallet"></i> RoomSplit
+            </a>
+            <ul class="nav flex-column">
+                <li class="nav-item"><a class="nav-link" href="dashboard.html"><i class="fa-solid fa-chart-line me-2"></i> Dashboard</a></li>
+                <li class="nav-item"><a class="nav-link" href="expenses.html"><i class="fa-solid fa-receipt me-2"></i> Expenses</a></li>
+                <li class="nav-item"><a class="nav-link" href="settlements.html"><i class="fa-solid fa-handshake me-2"></i> Settlements</a></li>
+                <li class="nav-item"><a class="nav-link active" href="room.html"><i class="fa-solid fa-users me-2"></i> Room Settings</a></li>
+            </ul>
+        </nav>
+
+        <main class="content">
+            <h2 class="mb-4">Room Settings</h2>
+            
+            <div id="noRoomSection" class="glass-card mb-4 d-none">
+                <h4>You are not part of any room</h4>
+                <div class="row mt-4">
+                    <div class="col-md-6">
+                        <h5>Create a New Room</h5>
+                        <form id="createRoomForm" class="mt-3">
+                            <input type="text" id="newRoomName" class="form-control mb-3" placeholder="Room Name" required>
+                            <button type="submit" class="btn-primary w-100">Create Room</button>
+                        </form>
+                    </div>
+                    <div class="col-md-6 mt-4 mt-md-0">
+                        <h5>Join Existing Room</h5>
+                        <form id="joinRoomForm" class="mt-3">
+                            <input type="text" id="joinRoomCode" class="form-control mb-3" placeholder="6-Digit Room Code" required>
+                            <button type="submit" class="btn-primary w-100" style="background: var(--secondary-color);">Join Room</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div id="roomSection" class="d-none">
+                <div class="row g-4">
+                    <div class="col-md-4">
+                        <div class="glass-card h-100">
+                            <h5>Room Info</h5>
+                            <hr>
+                            <p class="text-secondary mb-1">Room Name</p>
+                            <h4 id="displayRoomName">...</h4>
+                            
+                            <p class="text-secondary mt-3 mb-1">Invite Code</p>
+                            <div class="d-flex align-items-center gap-2">
+                                <h3 id="displayRoomCode" class="mb-0 text-primary fw-bold" style="letter-spacing: 2px;">...</h3>
+                                <button class="btn btn-sm btn-outline-secondary"><i class="fa-solid fa-copy"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="glass-card h-100">
+                            <h5>Members</h5>
+                            <hr>
+                            <div class="table-responsive">
+                                <table class="table table-borderless text-white" id="membersTable" style="color: var(--text-primary) !important;">
+                                    <thead>
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>Role</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="membersBody">
+                                        <!-- Members will be loaded here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../js/app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            if(!getToken()) { window.location.href = 'login.html'; return; }
+            
+            try {
+                const rooms = await apiFetch('/rooms/me');
+                if(rooms.length === 0) {
+                    document.getElementById('noRoomSection').classList.remove('d-none');
+                } else {
+                    document.getElementById('roomSection').classList.remove('d-none');
+                    const activeRoomId = rooms[0].room_id;
+                    localStorage.setItem('activeRoomId', activeRoomId);
+                    
+                    const roomInfo = await apiFetch(`/rooms/${activeRoomId}`);
+                    document.getElementById('displayRoomName').textContent = roomInfo.name;
+                    document.getElementById('displayRoomCode').textContent = roomInfo.code;
+                    
+                    loadMembers(activeRoomId);
+                }
+            } catch (err) { console.error(err); }
+        });
+        
+        document.getElementById('createRoomForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('newRoomName').value;
+            try {
+                await apiFetch('/rooms/', { method: 'POST', body: JSON.stringify({name}) });
+                window.location.reload();
+            } catch(err) { alert(err.message); }
+        });
+        
+        document.getElementById('joinRoomForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const code = document.getElementById('joinRoomCode').value;
+            try {
+                await apiFetch('/rooms/join', { method: 'POST', body: JSON.stringify({code}) });
+                alert("Join request sent! Wait for admin approval.");
+            } catch(err) { alert(err.message); }
+        });
+        
+        async function loadMembers(roomId) {
+            try {
+                const members = await apiFetch(`/rooms/${roomId}/members`);
+                const tbody = document.getElementById('membersBody');
+                tbody.innerHTML = '';
+                
+                members.forEach(m => {
+                    const tr = document.createElement('tr');
+                    let actions = '';
+                    if (m.status === 'Pending') {
+                        actions = `<button class="btn btn-sm btn-success" onclick="approveMember('${roomId}', '${m.user_id}')">Approve</button>`;
+                    }
+                    
+                    tr.innerHTML = `
+                        <td>${m.user_info.name}</td>
+                        <td><span class="badge bg-${m.role === 'Admin' ? 'primary' : 'secondary'}">${m.role}</span></td>
+                        <td><span class="badge bg-${m.status === 'Approved' ? 'success' : 'warning'}">${m.status}</span></td>
+                        <td>${actions}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch(err) { console.error(err); }
+        }
+        
+        async function approveMember(roomId, userId) {
+            try {
+                await apiFetch(`/rooms/${roomId}/members/${userId}/approve`, { method: 'PUT' });
+                loadMembers(roomId);
+            } catch(err) { alert(err.message); }
+        }
+    </script>
+</body>
+</html>
