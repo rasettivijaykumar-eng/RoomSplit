@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = 'https://roomsplit-backend.onrender.com/api';
 
 function initTheme() {
     const savedTheme = localStorage.getItem('theme') || 'light';
@@ -31,27 +31,27 @@ async function apiFetch(endpoint, options = {}) {
         'Content-Type': 'application/json',
         ...options.headers
     };
-    
+
     if (token) {
         headers['Authorization'] = `Bearer ${token}`;
     }
-    
+
     try {
         const response = await fetch(`${API_BASE_URL}${endpoint}`, {
             ...options,
             headers
         });
-        
+
         if (response.status === 401) {
             logout();
             return;
         }
-        
+
         const data = await response.json();
         if (!response.ok) {
             throw new Error(data.error || 'API Error');
         }
-        
+
         return data;
     } catch (error) {
         console.error('API Error:', error);
@@ -61,9 +61,9 @@ async function apiFetch(endpoint, options = {}) {
 
 document.addEventListener('DOMContentLoaded', () => {
     initTheme();
-    
+
     const themeBtn = document.getElementById('theme-toggle');
-    if(themeBtn) {
+    if (themeBtn) {
         themeBtn.addEventListener('click', toggleTheme);
         // icon logic could go here
     }
