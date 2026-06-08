@@ -139,6 +139,20 @@ p {
   gap: 8px;
 }
 
+/* Layout Base */
+.wrapper { display: flex; width: 100%; }
+.sidebar { width: 250px; min-height: 100vh; background: var(--card-bg); border-right: 1px solid var(--card-border); padding: 20px; }
+.content { flex-grow: 1; padding: 20px; max-width: 100%; overflow-x: hidden; }
+.nav-link { color: var(--text-secondary); padding: 10px 15px; border-radius: 8px; margin-bottom: 5px; transition: all 0.2s; }
+.nav-link:hover, .nav-link.active { background: rgba(79, 70, 229, 0.1); color: var(--primary-color); }
+
+/* Component Specifics */
+.stat-card { border-left: 4px solid var(--primary-color); }
+.stat-card.success { border-left-color: var(--success-color); }
+.stat-card.danger { border-left-color: var(--danger-color); }
+.expense-card { border-left: 4px solid var(--primary-color); margin-bottom: 15px; }
+.settlement-card { border-left: 4px solid #F59E0B; margin-bottom: 15px; }
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .wrapper {
